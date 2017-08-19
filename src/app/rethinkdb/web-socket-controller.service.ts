@@ -3,6 +3,7 @@ import EJSON from 'ejson';
 
 const callbacks = [];
 let id = 0;
+const subs = {};
 
 class Message { }
 
@@ -55,12 +56,14 @@ export class WebSocketControllerService {
     id += 1;
     console.log('sub', id, name, filter);
     callbacks[id] = callback;
+    subs[id] = [name, filter, callback];
     return id;
     //this.onMessage(new Message('added', id, {matricula: 'A-123'}));
   }
 
   unsub(subId: number) {
     console.log('unsub', subId);
+    delete subs[subId];
   }
 
   onMessage(smsg: string) {
