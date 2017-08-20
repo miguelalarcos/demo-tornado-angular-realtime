@@ -3,19 +3,6 @@ import { WebSocketControllerService } from '../web-socket-controller.service';
 import _ from 'underscore';
 
 @Component({
-  selector: 'app-rpc',
-  template: '<span></span>',
-})
-export class RPCComponent {
-
-  constructor(protected ws: WebSocketControllerService) { }
-
-  rpc(name, params, callback){
-    this.ws.rpc(name, params, callback);
-  }
-}
-
-@Component({
   selector: 'app-subscription',
   template: '<span></span>',
   // styleUrls: ['./subscription.component.css']

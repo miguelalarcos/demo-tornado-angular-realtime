@@ -16,8 +16,8 @@ class App(SDP):
         yield self.update('cars', id, {'color': color})
 
     @method
-    def create_red_car(self, registration):
-        yield self.insert('cars', {'registration': registration, 'color': 'red'})
+    def create_car_of_color(self, color, registration):
+        yield self.insert('cars', {'registration': registration, 'color': color})
 
     @sub
     def cars_of_color(self, color):
@@ -64,12 +64,52 @@ app.component.html
   <button (click)="color=color=='blue'?'red':'blue'">blue|red</button>
   <app-cars [color]="color"></app-cars>
   <input #registration type="text">
-  <button (click)="create_red_car(registration.value)">create red car</button>
+  <button (click)="create_car_of_color(registration.value, 'red')">create red car</button>
+  <button (click)="create_car_of_color(registration.value, 'blue')">create blue car</button>
 </div>
+
 ```
+
+app.component.ts
+```angularjs
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'app';
+  color = 'red';
+
+  constructor (private ws: WebSocketControllerService) {}
+
+  create_car_of_color(registration, color) {
+    this.ws.rpc('create_car_of_color', {registration: registration, color: color},
+      (x) => console.log(x));
+  }
+}
+```
+
+app.module.ts
+```angularjs
+@NgModule({
+  declarations: [
+    AppComponent,
+    CarsComponent
+  ],
+  imports: [
+    BrowserModule
+  ],
+  providers: [WebSocketControllerService],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
 
 Install and run:
 
-ng build
-rethinkdb
-python main.py
+* npm install
+* ng build
+* rethinkdb (create table 'cars' in database 'test')
+* python main.py
