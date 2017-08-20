@@ -16,8 +16,8 @@ class App(SDP):
         yield self.update('cars', id, {'color': color})
 
     @method
-    def create_red_car(self, matricula):
-        yield self.insert('cars', {'matricula': matricula, 'color': 'red'})
+    def create_red_car(self, registration):
+        yield self.insert('cars', {'registration': registration, 'color': 'red'})
 
     @sub
     def cars_of_color(self, color):
