@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { CarsComponent } from './cars/cars.component';
 import { WebSocketControllerService } from './rethinkdb/web-socket-controller.service';
+import { RethinkdbModule } from './rethinkdb/rethinkdb.module';
 
 @NgModule({
   declarations: [
@@ -10,7 +11,8 @@ import { WebSocketControllerService } from './rethinkdb/web-socket-controller.se
     CarsComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule // ,
+    // RethinkdbModule
   ],
   providers: [WebSocketControllerService],
   bootstrap: [AppComponent]

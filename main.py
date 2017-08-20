@@ -25,7 +25,7 @@ class App(SDP):
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("index.html")
+        self.render("dist/index.html")
 
 
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
@@ -36,8 +36,8 @@ class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
 def make_app():
     return tornado.web.Application([
         (r'/', MainHandler),
-        (r'/dest/(.*)', NoCacheStaticFileHandler, {'path': './dest'}),
         (r"/ws", App),
+        (r'/(.*)', NoCacheStaticFileHandler, {'path': './dist'}),
     ])
 
 

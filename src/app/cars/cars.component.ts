@@ -11,7 +11,7 @@ export class CarsComponent extends SubscriptionComponent {
 
   @Input()
   public set color(val: string){
-    this.sub('cars', {color: val});
+    this.sub('cars_of_color', {color: val});
   }
 
   constructor(protected ws: WebSocketControllerService) {

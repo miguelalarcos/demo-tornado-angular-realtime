@@ -1,13 +1,16 @@
 import { TestBed, async } from '@angular/core/testing';
 
 import { AppComponent } from './app.component';
+import {CarsComponent} from './cars/cars.component';
+import { WebSocketControllerService } from './rethinkdb/web-socket-controller.service';
 
 describe('AppComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        AppComponent
+        AppComponent, CarsComponent
       ],
+      providers: [WebSocketControllerService]
     }).compileComponents();
   }));
 

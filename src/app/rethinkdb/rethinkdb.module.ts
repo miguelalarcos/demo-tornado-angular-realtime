@@ -6,6 +6,7 @@ import { SubscriptionComponent } from './subscription/subscription.component';
   imports: [
     CommonModule
   ],
-  declarations: [SubscriptionComponent]
+  declarations: [SubscriptionComponent] // ,
+  // exports: [SubscriptionComponent]
 })
 export class RethinkdbModule { }

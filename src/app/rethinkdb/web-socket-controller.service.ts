@@ -3,73 +3,89 @@ import EJSON from 'ejson';
 
 const callbacks = [];
 let id = 0;
-const subs = {};
-
-class Message { }
-
-class MessageIn extends Message {
-  constructor(public msg: string, public id: number, public doc: object, public result?: any) {
-    super();
-  }
-}
-
-class MessageOut extends Message {
-  constructor() {
-    super();
-  }
-}
+const subs = [];
 
 class WS {
-  input: Message[];
   ws: WebSocket;
   ready: boolean;
 
   constructor() {
     this.ready = false;
-    this.ws = new WebSocket('ws://' + document.location.hostname + '/ws:8000');
+    this.ws = new WebSocket('ws://localhost:8888/ws');
     this.ws.onopen = (evt) => {
       this.ready = true;
-    }
+      for (const s of subs) {
+        this.sendSub(s[0], s[1], s[2]);
+      }
+    };
+    this.ws.onmessage = (evt) => {
+      console.log('->', evt.data);
+      const data = JSON.parse(evt.data);
+      const callback = callbacks[data.id];
+      if (callback) {
+        if (data.msg === 'method') {
+          callback(data.result);
+        } else {
+          callback(data);
+        }
+      }
+    };
+    this.ws.onclose = (evt) => {
+      this.ready = false;
+    };
   }
 
-  send(msg: Message) {
-    //this.input.push(msg);
+  sendSub (name, id, params) {
+    const data = {msg: 'sub', name: name, id: id, params: params};
+    this.ws.send(JSON.stringify(data));
   }
 
-  onInput() {
-    /*while (this.ready && this.input.length > 0) {
-      const msg = this.input.shift();
-      this.ws.send(msg);
-    }
-    */
+  sendUnSub (id) {
+    const data = {msg: 'unsub', id: id};
+    this.ws.send(JSON.stringify(data));
+  }
+
+  sendRPC (name, id, params) {
+    const data = {msg: 'method', method: name, id: id, params: params};
+    this.ws.send(JSON.stringify(data));
   }
 }
 
 @Injectable()
 export class WebSocketControllerService {
 
+  ws: WS;
+
   constructor() {
-    console.log('ws created');
+    this.ws = new WS();
   }
 
   sub(name, filter, callback) {
-    id += 1;
-    console.log('sub', id, name, filter);
-    callbacks[id] = callback;
-    subs[id] = [name, filter, callback];
-    return id;
-    //this.onMessage(new Message('added', id, {matricula: 'A-123'}));
+      id += 1;
+      callbacks[id] = callback;
+      subs.push([name, id, filter]);
+    if (this.ws.ready) {
+      this.ws.sendSub(name, id, filter);
+      return id;
+    } else {
+      return -1;
+    }
   }
 
-  unsub(subId: number) {
-    console.log('unsub', subId);
+  unsub (subId: number) {
     delete subs[subId];
+    if (this.ws.ready) {
+      this.ws.sendUnSub(id);
+    }
   }
 
-  onMessage(smsg: string) {
-    const msg = EJSON.parse(smsg);
-    const callback = callbacks[msg.id];
-    callback(msg.doc);
-    delete callbacks[msg.id];
+  rpc (name, params, callback?) {
+    if (this.ws.ready) {
+      id += 1;
+      this.ws.sendRPC(name, id, params);
+      if (callback) {
+        callbacks[id] = callback;
+      }
+    }
   }
 }
