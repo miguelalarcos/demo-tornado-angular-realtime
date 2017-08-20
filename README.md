@@ -49,7 +49,7 @@ export class CarsComponent extends SubscriptionComponent {
 ```
 
 cars.component.html
-```angular2html
+```html
 <ul>
   <li *ngFor="let car of store">
     {{car.registration}}
@@ -58,7 +58,7 @@ cars.component.html
 ```
 
 app.component.html
-```angular2html
+```html
 <div>
   <span>showing {{color}}</span>
   <button (click)="color=color=='blue'?'red':'blue'">blue|red</button>
@@ -71,7 +71,7 @@ app.component.html
 ```
 
 app.component.ts
-```angularjs
+```typescript
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -91,7 +91,7 @@ export class AppComponent {
 ```
 
 app.module.ts
-```angularjs
+```typescript
 @NgModule({
   declarations: [
     AppComponent,
@@ -109,6 +109,7 @@ export class AppModule { }
 
 Install and run:
 
+* install rethinkdb
 * npm install
 * ng build
 * rethinkdb (http://localhost:8080/ and create table 'cars' in database 'test')
