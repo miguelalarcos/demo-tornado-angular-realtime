@@ -14,6 +14,8 @@ export class CarsComponent extends SubscriptionComponent {
     this.sub('cars_of_color', {color: val});
   }
 
+  sort_keys = [['matricula', 'asc']];
+
   constructor(protected ws: WebSocketControllerService) {
     super(ws);
   }

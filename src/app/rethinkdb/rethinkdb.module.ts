@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SubscriptionComponent } from './subscription/subscription.component';
+import { SubscriptionComponent, RPCComponent } from './subscription/subscription.component';
 
 @NgModule({
   imports: [
     CommonModule
   ],
-  declarations: [SubscriptionComponent] // ,
+  declarations: [SubscriptionComponent, RPCComponent] // ,
   // exports: [SubscriptionComponent]
 })
 export class RethinkdbModule { }

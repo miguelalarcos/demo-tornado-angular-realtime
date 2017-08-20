@@ -35,18 +35,18 @@ class WS {
     };
   }
 
-  sendSub (name, id, params) {
-    const data = {msg: 'sub', name: name, id: id, params: params};
+  sendSub (name, subId, params) {
+    const data = {msg: 'sub', name: name, id: subId, params: params};
     this.ws.send(JSON.stringify(data));
   }
 
-  sendUnSub (id) {
-    const data = {msg: 'unsub', id: id};
+  sendUnSub (subId) {
+    const data = {msg: 'unsub', id: subId};
     this.ws.send(JSON.stringify(data));
   }
 
-  sendRPC (name, id, params) {
-    const data = {msg: 'method', method: name, id: id, params: params};
+  sendRPC (name, RPCId, params) {
+    const data = {msg: 'method', method: name, id: RPCId, params: params};
     this.ws.send(JSON.stringify(data));
   }
 }
@@ -66,16 +66,14 @@ export class WebSocketControllerService {
       subs.push([name, id, filter]);
     if (this.ws.ready) {
       this.ws.sendSub(name, id, filter);
-      return id;
-    } else {
-      return -1;
     }
+    return id;
   }
 
   unsub (subId: number) {
     delete subs[subId];
     if (this.ws.ready) {
-      this.ws.sendUnSub(id);
+      this.ws.sendUnSub(subId);
     }
   }
 
