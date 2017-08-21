@@ -28,6 +28,27 @@ def sub(f):
     subs.append(f.__name__)
     return f
 
+hooks = {'before_insert': [],
+         'before_update': []
+         }
+
+def before_insert(collection=None):
+  def decorator(f):
+    def helper(coll, doc):
+      if collection == coll or collection is None:
+        f(doc)
+    hooks['before_insert'].append(helper)
+    return f # does not matter, it's not going to be used directly, but helper in hooks
+  return decorator
+
+def before_update(collection=None):
+  def decorator(f):
+    def helper(coll, doc):
+      if collection == coll or collection is None:
+        f(doc)
+    hooks['before_update'].append(helper)
+    return f # does not matter, it's not going to be used directly, but helper in hooks
+  return decorator
 
 class SDP(tornado.websocket.WebSocketHandler):
 
@@ -154,7 +175,8 @@ class SDP(tornado.websocket.WebSocketHandler):
         self.after_insert(result)
 
     def before_insert(self, collection, doc):
-        pass
+        for hook in hooks['before_insert']:
+          hook(collection, doc)
 
     def after_insert(self, result):
         pass
@@ -167,7 +189,8 @@ class SDP(tornado.websocket.WebSocketHandler):
         self.after_update()
 
     def before_update(self, collection, subdoc):
-        pass
+        for hook in hooks['before_update']:
+          hook(collection, subdoc)
 
     def after_update(self):
         pass

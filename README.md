@@ -11,6 +11,10 @@ class App(SDP):
     def add(self, a, b):
         return a + b
 
+    @before_insert('cars')
+    def created_at(doc):
+      doc['created_at'] = time.time()
+
     @method
     def change_color(self, id, color):
         yield self.update('cars', id, {'color': color})

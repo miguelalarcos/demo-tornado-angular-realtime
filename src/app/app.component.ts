@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { RPCComponent} from './rethinkdb/subscription/subscription.component';
 import {WebSocketControllerService} from './rethinkdb/web-socket-controller.service';
 
 @Component({
@@ -7,7 +6,7 @@ import {WebSocketControllerService} from './rethinkdb/web-socket-controller.serv
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent /*extends RPCComponent*/ {
+export class AppComponent {
   title = 'app';
   color = 'red';
 

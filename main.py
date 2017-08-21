@@ -1,7 +1,8 @@
 import tornado.ioloop
 import tornado.web
-from sdp import SDP, method, sub
+from sdp import SDP, method, sub, before_insert
 import rethinkdb as r
+import time
 
 
 class App(SDP):
@@ -9,6 +10,10 @@ class App(SDP):
     @method
     def add(self, a, b):
         return a + b
+
+    @before_insert('cars')
+    def created_at(doc):
+      doc['created_at'] = time.time()
 
     @method
     def change_color(self, id, color):
