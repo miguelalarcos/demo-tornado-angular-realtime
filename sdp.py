@@ -50,6 +50,12 @@ def before_update(collection=None):
     return f # does not matter, it's not going to be used directly, but helper in hooks
   return decorator
 
+
+class CheckException(Exception):
+  def __init__(self, msg):
+    super().__init__(msg)
+    self.msg = msg
+
 class SDP(tornado.websocket.WebSocketHandler):
 
     def __init__(self, application, request):
@@ -61,6 +67,10 @@ class SDP(tornado.websocket.WebSocketHandler):
         self.pending_unsubs = []
         self.queue = Queue(maxsize=10)
         tornado.ioloop.IOLoop.current().spawn_callback(self.consumer)
+
+    def check(self, attr, type):
+      if not isinstance(attr, type):
+        raise CheckException(attr + ' is not of type ' + str(type))
 
     @gen.coroutine
     def feed(self, sub_id, query):
@@ -132,21 +142,18 @@ class SDP(tornado.websocket.WebSocketHandler):
                 if data['method'] not in methods:
                     self.send_nomethod(data['id'], 'method does not exist')
                 else:
-                    method = getattr(self, data['method'])
-                    result = yield method(**data['params'])
-                    self.send_result(data['id'], result)
+                    try:
+                      method = getattr(self, data['method'])
+                      result = yield method(**data['params'])
+                      self.send_result(data['id'], result)
+                    except CheckException as e:
+                      self.send_error(data['id'], e.msg)
             elif message == 'sub':
                 if data['name'] not in subs:
                     self.send_nosub(data['id'], 'sub does not exist')
                 else:
                     query = getattr(self, data['name'])(**data['params'])
                     tornado.ioloop.IOLoop.current().spawn_callback(self.feed, data['id'], query)
-                #prefixed = 'sub_' + data['name']
-                #try:
-                #    query = getattr(self, prefixed)(**data['params'])
-                #    tornado.ioloop.IOLoop.current().spawn_callback(self.feed, data['id'], query)
-                #except AttributeError:
-                #    self.send_nosub(data['id'], 'sub does not exist')
             elif message == 'unsub':
                 id = data['id']
                 feed = self.registered_feeds[id]
@@ -154,8 +161,6 @@ class SDP(tornado.websocket.WebSocketHandler):
                 del self.registered_feeds[id]
 
             self.queue.task_done()
-
-
 
     def on_close(self):
         for feed in self.registered_feeds.values():

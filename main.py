@@ -21,6 +21,8 @@ class App(SDP):
 
     @method
     def create_car_of_color(self, color, matricula):
+        self.check(color, str)
+        self.check(matricula, str)
         yield self.insert('cars', {'matricula': matricula, 'color': color})
 
     @sub
