@@ -34,27 +34,52 @@ hooks = {'before_insert': [],
 
 def before_insert(collection=None):
   def decorator(f):
-    def helper(coll, doc):
+    def helper(self, coll, doc):
       if collection == coll or collection is None:
-        f(doc)
+        f(self, doc)
     hooks['before_insert'].append(helper)
     return f # does not matter, it's not going to be used directly, but helper in hooks
   return decorator
 
 def before_update(collection=None):
   def decorator(f):
-    def helper(coll, doc):
+    def helper(self, coll, doc):
       if collection == coll or collection is None:
-        f(doc)
+        f(self, doc)
     hooks['before_update'].append(helper)
     return f # does not matter, it's not going to be used directly, but helper in hooks
   return decorator
 
 
-class CheckException(Exception):
-  def __init__(self, msg):
-    super().__init__(msg)
-    self.msg = msg
+class MethodError(Exception):
+  pass
+
+class CheckError(Exception):
+  pass
+
+can = {'update': [], 'insert': []}
+
+def can_insert(table):
+    def decorate(f):
+        def helper(self, t, doc):
+            if t == table:
+                return f(self, doc)
+            else:
+                return True
+        can['insert'].append(helper)
+        return f # does not matter f or helper, it's not going to be used directly
+    return decorate
+
+def can_update(table):
+    def decorate(f):
+        def helper(self, t, doc, old_doc):
+            if t == table:
+                return f(self, doc, old_doc)
+            else:
+                return True
+        can['update'].append(helper)
+        return f # does not matter f or helper, it's not going to be used directly
+    return decorate
 
 class SDP(tornado.websocket.WebSocketHandler):
 
@@ -66,11 +91,16 @@ class SDP(tornado.websocket.WebSocketHandler):
         self.registered_feeds = {}
         self.pending_unsubs = []
         self.queue = Queue(maxsize=10)
+        self.user_id = None
         tornado.ioloop.IOLoop.current().spawn_callback(self.consumer)
 
     def check(self, attr, type):
       if not isinstance(attr, type):
-        raise CheckException(attr + ' is not of type ' + str(type))
+        raise CheckError(attr + ' is not of type ' + str(type))
+
+    @method
+    def login(self, user_name):
+        self.user_id = user_name
 
     @gen.coroutine
     def feed(self, sub_id, query):
@@ -96,7 +126,8 @@ class SDP(tornado.websocket.WebSocketHandler):
         self.write_message({'msg': 'error', 'id': id, 'error': error})
 
     def send_added(self, sub_id, doc):
-        self.write_message({'msg': 'added', 'id': sub_id, 'doc': doc})
+        self.send({'msg': 'added', 'id': sub_id, 'doc': doc})
+        # self.write_message({'msg': 'added', 'id': sub_id, 'doc': doc})
 
     def send_changed(self, sub_id, doc):
         self.write_message({'msg': 'changed', 'id': sub_id, 'doc': doc})
@@ -136,31 +167,37 @@ class SDP(tornado.websocket.WebSocketHandler):
             if msg == 'stop':
                 return
             data = ejson.loads(msg)
-            message = data['msg']
-
-            if message == 'method':
-                if data['method'] not in methods:
-                    self.send_nomethod(data['id'], 'method does not exist')
-                else:
-                    try:
-                      method = getattr(self, data['method'])
-                      result = yield method(**data['params'])
-                      self.send_result(data['id'], result)
-                    except CheckException as e:
-                      self.send_error(data['id'], e.msg)
-            elif message == 'sub':
-                if data['name'] not in subs:
-                    self.send_nosub(data['id'], 'sub does not exist')
-                else:
-                    query = getattr(self, data['name'])(**data['params'])
-                    tornado.ioloop.IOLoop.current().spawn_callback(self.feed, data['id'], query)
-            elif message == 'unsub':
+            try:
+                message = data['msg']
                 id = data['id']
-                feed = self.registered_feeds[id]
-                feed.close()
-                del self.registered_feeds[id]
+                params = data['params']
 
-            self.queue.task_done()
+                if message == 'method':
+                    method = data['method']
+                    if method not in methods:
+                        self.send_nomethod(id, 'method does not exist')
+                    else:
+                        try:
+                          method = getattr(self, method)
+                          result = yield method(**params)
+                          self.send_result(id, result)
+                        except Exception as e:
+                          self.send_error(id, str(e))
+                elif message == 'sub':
+                    name = data['name']
+                    if name not in subs:
+                        self.send_nosub(id, 'sub does not exist')
+                    else:
+                        query = getattr(self, name)(**params)
+                        tornado.ioloop.IOLoop.current().spawn_callback(self.feed, id, query)
+                elif message == 'unsub':
+                    feed = self.registered_feeds[id]
+                    feed.close()
+                    del self.registered_feeds[id]
+            except KeyError as e:
+              self.send_error(str(e))
+            finally:
+              self.queue.task_done()
 
     def on_close(self):
         for feed in self.registered_feeds.values():
@@ -173,29 +210,33 @@ class SDP(tornado.websocket.WebSocketHandler):
         tornado.ioloop.IOLoop.current().spawn_callback(helper)
 
     @gen.coroutine
-    def insert(self, collection, doc):
-        self.before_insert(collection, doc)
-        conn = yield self.conn
-        result = yield r.table(collection).insert(doc).run(conn)
-        self.after_insert(result)
+    def insert(self, table, doc):
+        cans = [c(self, table, doc) for c in can['insert']]
+        if not all(cans):
+            raise MethodError('can not insert ' + table)
+        else:
+            self.before_insert(table, doc)
+            conn = yield self.conn
+            result = yield r.table(table).insert(doc).run(conn)
+            # self.after_insert()
 
     def before_insert(self, collection, doc):
         for hook in hooks['before_insert']:
-          hook(collection, doc)
-
-    def after_insert(self, result):
-        pass
+          hook(self, collection, doc)
 
     @gen.coroutine
-    def update(self, collection, id, subdoc):
-        self.before_update(collection, subdoc)
+    def update(self, table, id, doc):
         conn = yield self.conn
-        result = yield r.table(collection).get(id).update(subdoc).run(conn)
-        self.after_update()
+        old_doc = yield r.table(table).get(id).run(conn)
+        cans = [c(self, table, doc, old_doc) for c in can['update']]
+        if not all(cans):
+            raise MethodError('can not update ' + table + ', id: ' + str(id))
+        else:
+            self.before_update(table, doc)
+            result = yield r.table(table).get(id).update(doc).run(conn)
+            self.after_update()
 
     def before_update(self, collection, subdoc):
         for hook in hooks['before_update']:
-          hook(collection, subdoc)
+          hook(self, collection, subdoc)
 
-    def after_update(self):
-        pass

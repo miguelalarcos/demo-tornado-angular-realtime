@@ -1,8 +1,9 @@
 import tornado.ioloop
 import tornado.web
-from sdp import SDP, method, sub, before_insert
+from sdp import SDP, method, sub, before_insert, can_update, can_insert
 import rethinkdb as r
 import time
+from datetime import datetime
 
 
 class App(SDP):
@@ -11,9 +12,18 @@ class App(SDP):
     def add(self, a, b):
         return a + b
 
+    @can_insert('cars')
+    def is_logged(self, doc):
+        return self.user_id is not None
+
+    @can_update('cars')
+    def is_owner(self, doc, old_doc):
+        return old_doc['owner'] == self.user_id
+
     @before_insert('cars')
-    def created_at(doc):
-      doc['created_at'] = time.time()
+    def created_at(self, doc):
+        doc['created_at'] = datetime.now(r.make_timezone('00:00')) # time.time()
+        doc['owner'] = self.user_id
 
     @method
     def change_color(self, id, color):
