@@ -117,7 +117,7 @@ class SDP(tornado.websocket.WebSocketHandler):
 
     @gen.coroutine
     def feed(self, sub_id, query):
-        query = query.filter(~r.row.has_fields('soft_delete'))
+        query = query.filter(~r.row.has_fields('deleted'))
         conn = yield self.conn
         feed = yield query.changes(include_initial=True).run(conn)
         self.registered_feeds[sub_id] = feed

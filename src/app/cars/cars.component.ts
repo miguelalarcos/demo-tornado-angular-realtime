@@ -25,7 +25,7 @@ export class CarsComponent extends SubscriptionComponent {
   }
 
   delete_car(id) {
-    this.ws.rpc('delete_car', id);
+    this.ws.rpc('delete_car', {id: id});
   }
 
 }
