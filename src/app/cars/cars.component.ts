@@ -20,4 +20,8 @@ export class CarsComponent extends SubscriptionComponent {
     super(ws);
   }
 
+  log_car(car) {
+    this.ws.rpc('log_object', car);
+  }
+
 }

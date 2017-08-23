@@ -1,13 +1,15 @@
-# Vue.js --- SDP --- Tornado --- Rethinkdb
 # SDP: Subscription Data Protocol
+
 import tornado
 import tornado.ioloop
 import tornado.websocket
 from tornado.queues import Queue
 import time
-import ejson
+# import ejson
 import rethinkdb as r
 from tornado import gen
+import json
+from datetime import datetime
 
 
 r.set_loop_type("tornado")
@@ -105,7 +107,7 @@ class SDP(tornado.websocket.WebSocketHandler):
     @gen.coroutine
     def feed(self, sub_id, query):
         conn = yield self.conn
-        feed = yield query.changes(include_initial=True).run(conn) # send initials
+        feed = yield query.changes(include_initial=True).run(conn)
         self.registered_feeds[sub_id] = feed
         while (yield feed.fetch_next()):
             item = yield feed.next()
@@ -117,7 +119,14 @@ class SDP(tornado.websocket.WebSocketHandler):
                 self.send_changed(sub_id, item['new_val'])
 
     def send(self, data):
-        self.write_message(ejson.dumps(data))
+        def helper(x):
+            if(isinstance(x, datetime)):
+                # return json.dumps({'$date': x.timestamp()})
+                return {'$date': x.timestamp()}
+            else:
+                return x
+        self.write_message(json.dumps(data, default=helper))
+        # self.write_message(ejson.dumps(data)) # json dumps with default
 
     def send_result(self, id, result):
         self.write_message({'msg': 'result', 'id': id, 'result': result})
@@ -152,7 +161,7 @@ class SDP(tornado.websocket.WebSocketHandler):
         pass
 
     def on_message(self, msg):
-        print('->', msg)
+        print('raw ->', msg)
         @gen.coroutine
         def helper(msg):
             yield self.queue.put(msg)
@@ -166,7 +175,13 @@ class SDP(tornado.websocket.WebSocketHandler):
             msg = yield self.queue.get()
             if msg == 'stop':
                 return
-            data = ejson.loads(msg)
+            # data = ejson.loads(msg) # json.loads con object_hook
+            def helper(dct):
+                if '$date' in dct.keys():
+                    return datetime.fromtimestamp(dct['$date'])
+                return dct
+            data = json.loads(msg, object_hook=helper)
+            print(data)
             try:
                 message = data['msg']
                 id = data['id']

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import EJSON from 'ejson';
+import _ from 'underscore';
 
 const callbacks = [];
 let id = 0;
@@ -20,13 +21,16 @@ class WS {
     };
     this.ws.onmessage = (evt) => {
       console.log('raw->', evt.data);
+      const data = EJSON.parse(evt.data);
+      /*
       const data = JSON.parse(evt.data, function(key, value) {
-          if (value['__class__'] === 'datetime.datetime') {
+          if (value !== null && value['__class__'] === 'datetime.datetime') {
             return new Date(value['__value__']);
           } else {
             return value;
           }
       });
+      */
       console.log(data);
       const callback = callbacks[data.id];
       if (callback) {
@@ -42,6 +46,19 @@ class WS {
     };
   }
 
+  send(data) {
+    this.ws.send(EJSON.stringify(data));
+    /*
+    this.ws.send(JSON.stringify(data, function (k, v) {
+      if (_.isDate(v) || k === 'created_at') {
+        return {__class__: 'datetime.datetime', __value__: v.toString()};
+      } else {
+        return v;
+      }
+    }));
+    */
+  }
+
   sendSub (name, subId, params) {
     const data = {msg: 'sub', name: name, id: subId, params: params};
     this.ws.send(JSON.stringify(data));
@@ -54,7 +71,8 @@ class WS {
 
   sendRPC (name, RPCId, params) {
     const data = {msg: 'method', method: name, id: RPCId, params: params};
-    this.ws.send(JSON.stringify(data));
+    // this.ws.send(JSON.stringify(data));
+    this.send(data);
   }
 }
 
