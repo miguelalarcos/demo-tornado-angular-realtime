@@ -4,7 +4,7 @@ from sdp import SDP, method, sub, before_insert, can_update, can_insert
 import rethinkdb as r
 import time
 from datetime import datetime
-
+import pytz
 
 class App(SDP):
 
@@ -14,19 +14,21 @@ class App(SDP):
 
     @method
     def log_object(self, **doc):
-      print(doc)
+        print(doc)
+        yield self.update('cars', doc['id'], {'created_at2': doc['created_at'].replace(tzinfo=pytz.UTC)}) # r.make_timezone('00:00'))})
 
     @can_insert('cars')
     def is_logged(self, doc):
         return self.user_id is not None
 
-    @can_update('cars')
-    def is_owner(self, doc, old_doc):
-        return old_doc['owner'] == self.user_id
+    #@can_update('cars')
+    #def is_owner(self, doc, old_doc):
+    #    return old_doc['owner'] == self.user_id
 
     @before_insert('cars')
     def created_at(self, doc):
-        doc['created_at'] = datetime.now(r.make_timezone('00:00')) # time.time()
+        # doc['created_at'] = datetime.now(r.make_timezone('00:00')) # time.time()
+        doc['created_at'] = datetime.now().replace(tzinfo=pytz.UTC)  # time.time()
         doc['owner'] = self.user_id
 
     @method
@@ -38,6 +40,10 @@ class App(SDP):
         self.check(color, str)
         self.check(matricula, str)
         yield self.insert('cars', {'matricula': matricula, 'color': color})
+
+    @method
+    def delete_car(self, id):
+        yield self.soft_delete('cars', id)
 
     @sub
     def cars_of_color(self, color):

@@ -47,6 +47,7 @@ class WS {
   }
 
   send(data) {
+    console.log('=>', data);
     this.ws.send(EJSON.stringify(data));
     /*
     this.ws.send(JSON.stringify(data, function (k, v) {
@@ -70,6 +71,7 @@ class WS {
   }
 
   sendRPC (name, RPCId, params) {
+    console.log('sendRPC', name, params);
     const data = {msg: 'method', method: name, id: RPCId, params: params};
     // this.ws.send(JSON.stringify(data));
     this.send(data);

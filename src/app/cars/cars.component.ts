@@ -24,4 +24,8 @@ export class CarsComponent extends SubscriptionComponent {
     this.ws.rpc('log_object', car);
   }
 
+  delete_car(id) {
+    this.ws.rpc('delete_car', id);
+  }
+
 }

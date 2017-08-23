@@ -59,7 +59,7 @@ class MethodError(Exception):
 class CheckError(Exception):
   pass
 
-can = {'update': [], 'insert': []}
+can = {'update': [], 'insert': [], 'delete': []}
 
 def can_insert(table):
     def decorate(f):
@@ -80,6 +80,17 @@ def can_update(table):
             else:
                 return True
         can['update'].append(helper)
+        return f # does not matter f or helper, it's not going to be used directly
+    return decorate
+
+def can_delete(table):
+    def decorate(f):
+        def helper(self, t, old_doc):
+            if t == table:
+                return f(self, old_doc)
+            else:
+                return True
+        can['delete'].append(helper)
         return f # does not matter f or helper, it's not going to be used directly
     return decorate
 
@@ -106,6 +117,7 @@ class SDP(tornado.websocket.WebSocketHandler):
 
     @gen.coroutine
     def feed(self, sub_id, query):
+        query = query.filter(~r.row.has_fields('soft_delete'))
         conn = yield self.conn
         feed = yield query.changes(include_initial=True).run(conn)
         self.registered_feeds[sub_id] = feed
@@ -122,7 +134,7 @@ class SDP(tornado.websocket.WebSocketHandler):
         def helper(x):
             if(isinstance(x, datetime)):
                 # return json.dumps({'$date': x.timestamp()})
-                return {'$date': x.timestamp()}
+                return {'$date': x.timestamp()*1000}
             else:
                 return x
         self.write_message(json.dumps(data, default=helper))
@@ -139,10 +151,12 @@ class SDP(tornado.websocket.WebSocketHandler):
         # self.write_message({'msg': 'added', 'id': sub_id, 'doc': doc})
 
     def send_changed(self, sub_id, doc):
-        self.write_message({'msg': 'changed', 'id': sub_id, 'doc': doc})
+        self.send({'msg': 'changed', 'id': sub_id, 'doc': doc})
+        #self.write_message({'msg': 'changed', 'id': sub_id, 'doc': doc})
 
     def send_removed(self, sub_id, doc_id):
-        self.write_message({'msg': 'removed', 'id': sub_id, 'doc_id': doc_id})
+        self.send({'msg': 'removed', 'id': sub_id, 'doc_id': doc_id})
+        #self.write_message({'msg': 'removed', 'id': sub_id, 'doc_id': doc_id})
 
     def send_ready(self, sub_id):
         self.write_message({'msg': 'ready', 'id': sub_id})
@@ -178,7 +192,7 @@ class SDP(tornado.websocket.WebSocketHandler):
             # data = ejson.loads(msg) # json.loads con object_hook
             def helper(dct):
                 if '$date' in dct.keys():
-                    return datetime.fromtimestamp(dct['$date'])
+                    return datetime.utcfromtimestamp(dct['$date']/1000.0)
                 return dct
             data = json.loads(msg, object_hook=helper)
             print(data)
@@ -220,7 +234,7 @@ class SDP(tornado.websocket.WebSocketHandler):
         del sessions[self.session]
 
         @gen.coroutine
-        def helper():
+        def helper(): # is it possible to call self.queue.put directly?
             self.queue.put('stop')
         tornado.ioloop.IOLoop.current().spawn_callback(helper)
 
@@ -249,9 +263,18 @@ class SDP(tornado.websocket.WebSocketHandler):
         else:
             self.before_update(table, doc)
             result = yield r.table(table).get(id).update(doc).run(conn)
-            self.after_update()
+            #self.after_update()
 
     def before_update(self, collection, subdoc):
         for hook in hooks['before_update']:
           hook(self, collection, subdoc)
 
+    @gen.coroutine
+    def soft_delete(self, table, id):
+      conn = yield self.conn
+      old_doc = yield r.table(table).get(id).run(conn)
+      cans = [c(self, table, old_doc) for c in can['delete']]
+      if not all(cans):
+        raise MethodError('can not delete ' + table + ', id: ' + str(id))
+      else:
+        result = yield r.table(table).get(id).update({'deleted': True}).run(conn)
