@@ -10,7 +10,7 @@ import rethinkdb as r
 from tornado import gen
 import json
 from datetime import datetime
-
+import pytz
 
 r.set_loop_type("tornado")
 #https://www.rethinkdb.com/docs/async-connections/
@@ -192,7 +192,8 @@ class SDP(tornado.websocket.WebSocketHandler):
             # data = ejson.loads(msg) # json.loads con object_hook
             def helper(dct):
                 if '$date' in dct.keys():
-                    return datetime.utcfromtimestamp(dct['$date']/1000.0)
+                    d = datetime.utcfromtimestamp(dct['$date']/1000.0)
+                    return d.replace(tzinfo=pytz.UTC)
                 return dct
             data = json.loads(msg, object_hook=helper)
             print(data)

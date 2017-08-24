@@ -3,7 +3,7 @@ import tornado.web
 from sdp import SDP, method, sub, before_insert, can_update, can_insert
 import rethinkdb as r
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import pytz
 
 class App(SDP):
@@ -15,20 +15,19 @@ class App(SDP):
     @method
     def log_object(self, **doc):
         print(doc)
-        yield self.update('cars', doc['id'], {'created_at2': doc['created_at'].replace(tzinfo=pytz.UTC)}) # r.make_timezone('00:00'))})
+        yield self.update('cars', doc['id'], {'created_at2': doc['created_at']})
 
     @can_insert('cars')
     def is_logged(self, doc):
         return self.user_id is not None
 
-    #@can_update('cars')
-    #def is_owner(self, doc, old_doc):
-    #    return old_doc['owner'] == self.user_id
+    @can_update('cars')
+    def is_owner(self, doc, old_doc):
+        return old_doc['owner'] == self.user_id
 
     @before_insert('cars')
     def created_at(self, doc):
-        # doc['created_at'] = datetime.now(r.make_timezone('00:00')) # time.time()
-        doc['created_at'] = datetime.now().replace(tzinfo=pytz.UTC)  # time.time()
+        doc['created_at'] = datetime.now(timezone.utc)
         doc['owner'] = self.user_id
 
     @method
