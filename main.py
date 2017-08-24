@@ -12,11 +12,6 @@ class App(SDP):
     def add(self, a, b):
         return a + b
 
-    @method
-    def log_object(self, **doc):
-        print(doc)
-        yield self.update('cars', doc['id'], {'created_at2': doc['created_at']})
-
     @can_insert('cars')
     def is_logged(self, doc):
         return self.user_id is not None

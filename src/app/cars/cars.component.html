@@ -1,6 +1,5 @@
 <ul>
   <li *ngFor="let car of store">
-    {{car.matricula}}, {{car.created_at}}, <button (click)="log_car(car)">log object</button>
-    <button (click)="delete_car(car.id)">delete car</button>
+    {{car.matricula}}, {{format_date(car.created_at)}}, <button (click)="delete_car(car.id)">delete car</button>
   </li>
 </ul>

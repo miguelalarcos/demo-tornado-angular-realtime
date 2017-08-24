@@ -1,6 +1,7 @@
 import { Input, Component } from '@angular/core';
 import { SubscriptionComponent } from '../rethinkdb/subscription/subscription.component';
 import { WebSocketControllerService } from '../rethinkdb/web-socket-controller.service';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-cars',
@@ -20,12 +21,12 @@ export class CarsComponent extends SubscriptionComponent {
     super(ws);
   }
 
-  log_car(car) {
-    this.ws.rpc('log_object', car);
-  }
-
   delete_car(id) {
     this.ws.rpc('delete_car', {id: id});
+  }
+
+  format_date(date) {
+    return moment(date).format();
   }
 
 }

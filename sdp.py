@@ -200,9 +200,9 @@ class SDP(tornado.websocket.WebSocketHandler):
             try:
                 message = data['msg']
                 id = data['id']
-                params = data['params']
 
                 if message == 'method':
+                    params = data['params']
                     method = data['method']
                     if method not in methods:
                         self.send_nomethod(id, 'method does not exist')
@@ -215,6 +215,7 @@ class SDP(tornado.websocket.WebSocketHandler):
                           self.send_error(id, str(e))
                 elif message == 'sub':
                     name = data['name']
+                    params = data['params']
                     if name not in subs:
                         self.send_nosub(id, 'sub does not exist')
                     else:
@@ -225,7 +226,7 @@ class SDP(tornado.websocket.WebSocketHandler):
                     feed.close()
                     del self.registered_feeds[id]
             except KeyError as e:
-              self.send_error(str(e))
+              self.send_error(id, str(e))
             finally:
               self.queue.task_done()
 
