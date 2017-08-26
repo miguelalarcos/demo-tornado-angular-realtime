@@ -1,9 +1,15 @@
 <div>
+  <div>
+    <div *ngIf="!user" id="okta-login-container"></div>
+    <div *ngIf="user">
+      <button (click)="logout()">Logout</button>
+    </div>
+  </div>
   <button (click)="login()">login</button>
   <span>showing {{color}}</span>
   <button (click)="color=color=='blue'?'red':'blue'">blue|red</button>
   <app-cars [color]="color"></app-cars>
   <input #matricula type="text">
-  <button (click)="create_car_of_color(matricula.value, 'red')">create red car</button>
-  <button (click)="create_car_of_color(matricula.value, 'blue')">create blue car</button>
+  <button (click)="create_car(matricula.value, 'red')">create red car</button>
+  <button (click)="create_car(matricula.value, 'blue')">create blue car</button>
 </div>

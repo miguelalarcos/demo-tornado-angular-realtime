@@ -11,6 +11,7 @@ from tornado import gen
 import json
 from datetime import datetime
 import pytz
+import sigin
 
 r.set_loop_type("tornado")
 #https://www.rethinkdb.com/docs/async-connections/
@@ -112,8 +113,13 @@ class SDP(tornado.websocket.WebSocketHandler):
         raise CheckError(attr + ' is not of type ' + str(type))
 
     @method
-    def login(self, user_name):
-        self.user_id = user_name
+    def login(self, token):
+        email = sigin.sigin(token)
+        if email:
+          self.user_id = email
+          return True
+        else:
+          return False
 
     @gen.coroutine
     def feed(self, sub_id, query):

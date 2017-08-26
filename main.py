@@ -4,7 +4,8 @@ from sdp import SDP, method, sub, before_insert, can_update, can_insert
 import rethinkdb as r
 import time
 from datetime import datetime, timezone
-import pytz
+from validation import car_validator
+
 
 class App(SDP):
 
@@ -28,6 +29,11 @@ class App(SDP):
     @method
     def change_color(self, id, color):
         yield self.update('cars', id, {'color': color})
+
+    @method
+    def create_car(self, id, **car):
+        car_validator.validate(car)
+        yield self.insert('cars', car)
 
     @method
     def create_car_of_color(self, color, matricula):
