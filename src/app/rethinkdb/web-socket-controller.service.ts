@@ -12,7 +12,7 @@ class WS {
 
   constructor() {
     this.ready = false;
-    this.ws = new WebSocket('ws://localhost:4200/ws');
+    this.ws = new WebSocket('ws://localhost:8888/ws');
     this.ws.onopen = (evt) => {
       this.ready = true;
       for (const s of subs) {

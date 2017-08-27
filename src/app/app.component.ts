@@ -61,6 +61,7 @@ export class AppComponent implements OnInit{
   }
 
   ngOnInit() {
+    /*
     this.oktaSignIn.session.get((response) => {
       if (response.status !== 'INACTIVE') {
         console.log(response);
@@ -70,6 +71,7 @@ export class AppComponent implements OnInit{
         this.showLogin();
       }
     });
+    */
   }
 
   logout() {
