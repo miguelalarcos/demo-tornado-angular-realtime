@@ -113,6 +113,19 @@ class SDP(tornado.websocket.WebSocketHandler):
         raise CheckError(attr + ' is not of type ' + str(type))
 
     @method
+    def glogin(self, token):
+        print('glogin->', token)
+        url = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" + token
+        request = HTTPRequest(url=url, method="GET")
+        response = yield AsyncHTTPClient().fetch(request)
+
+        if response.code == 200:
+            data = json.loads(str(response.body, 'utf-8'))
+            return data['email']
+        else:
+            return None
+
+    @method
     def login(self, token):
         request = HTTPRequest(url="https://dev-905907.oktapreview.com/oauth2/v1/userinfo",
                               method="POST",
@@ -120,7 +133,8 @@ class SDP(tornado.websocket.WebSocketHandler):
                               body='None'
                               )
         response = yield AsyncHTTPClient().fetch(request)
-        print(response.code, response.body)
+        print(response.code, str(response.body, 'utf-8'))
+        #if response.code != 200
         data = json.loads(str(response.body, 'utf-8'))
         return data['email']
 

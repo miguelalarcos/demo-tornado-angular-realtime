@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { Okta } from './okta/okta.service';
-import {ChangeDetectorRef } from '@angular/core';
+// import { Okta } from './okta/okta.service';
+// import {ChangeDetectorRef } from '@angular/core';
 import {WebSocketControllerService} from './rethinkdb/web-socket-controller.service';
+
+declare const gapi: any;
 
 @Component({
   selector: 'app-root',
@@ -14,14 +16,30 @@ export class AppComponent implements OnInit{
   user;
   oktaSignIn;
 
-  constructor (private okta: Okta, private ref: ChangeDetectorRef,
+  constructor (/*private okta: Okta, private ref: ChangeDetectorRef,*/
                private ws: WebSocketControllerService) {
-    this.oktaSignIn = okta.getWidget();
+    // this.oktaSignIn = okta.getWidget();
+    gapi.load('auth2', function () {
+      gapi.auth2.init();
+    });
+  }
+
+  googleLogin() {
+    const googleAuth = gapi.auth2.getAuthInstance();
+    googleAuth.then(() => {
+      googleAuth.signIn({scope: 'profile email'}).then(googleUser => {
+        this.login(googleUser.getAuthResponse().access_token);
+      });
+    });
+  }
+
+  signOut() {
+    gapi.auth2.getAuthInstance().disconnect();
   }
 
   login(token) {
-    this.ws.rpc('login', {token: token}, (ret) => {
-      console.log('--->ret:', ret)
+    this.ws.rpc('glogin', {token: token}, (ret) => {
+      console.log('--->ret:', ret);
       this.user = ret;
     });
   }
@@ -47,7 +65,7 @@ export class AppComponent implements OnInit{
       if (response.status !== 'INACTIVE') {
         console.log(response);
         this.user = response.login;
-        this.ref.detectChanges();
+        // this.ref.detectChanges();
       } else {
         this.showLogin();
       }
@@ -59,7 +77,7 @@ export class AppComponent implements OnInit{
       console.log('err:', err);
       this.user = undefined;
       this.showLogin();
-      this.ref.detectChanges();
+      // this.ref.detectChanges();
     });
   }
 
