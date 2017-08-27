@@ -1,15 +1,7 @@
 <div>
-  <!--<div>
-    <div *ngIf="!user" id="okta-login-container"></div>
-    <div *ngIf="user">
-      Hello {{user}}
-      <button (click)="logout()">Logout</button>
-    </div>
-  </div>
-  -->
   <div>
-    <div class="g-signin2" (click)="googleLogin()" data-theme="dark"></div>
-    <button (click)="signOut()">signout</button>
+    <div *ngIf="!user" class="g-signin2" (click)="googleLogin()" data-theme="dark"></div>
+    <button *ngIf="user" (click)="signOut()">signout</button>
   </div>
 
   <span>showing {{color}}</span>

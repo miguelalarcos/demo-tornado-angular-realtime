@@ -1,6 +1,6 @@
 import tornado.ioloop
 import tornado.web
-from sdp import SDP, method, sub, before_insert, can_update, can_insert
+from sdp import SDP, method, sub, before_insert, can_update, can_insert, can_delete
 import rethinkdb as r
 import time
 from datetime import datetime, timezone
@@ -19,6 +19,10 @@ class App(SDP):
 
     @can_update('cars')
     def is_owner(self, doc, old_doc):
+        return old_doc['owner'] == self.user_id
+
+    @can_delete('cars')
+    def is_owner(self, old_doc):
         return old_doc['owner'] == self.user_id
 
     @before_insert('cars')

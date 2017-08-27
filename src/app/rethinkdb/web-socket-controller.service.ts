@@ -22,15 +22,6 @@ class WS {
     this.ws.onmessage = (evt) => {
       console.log('raw->', evt.data);
       const data = EJSON.parse(evt.data);
-      /*
-      const data = JSON.parse(evt.data, function(key, value) {
-          if (value !== null && value['__class__'] === 'datetime.datetime') {
-            return new Date(value['__value__']);
-          } else {
-            return value;
-          }
-      });
-      */
       console.log(data);
       const callback = callbacks[data.id];
       if (callback) {
@@ -52,15 +43,6 @@ class WS {
   send(data) {
     console.log('=>', data);
     this.ws.send(EJSON.stringify(data));
-    /*
-    this.ws.send(JSON.stringify(data, function (k, v) {
-      if (_.isDate(v) || k === 'created_at') {
-        return {__class__: 'datetime.datetime', __value__: v.toString()};
-      } else {
-        return v;
-      }
-    }));
-    */
   }
 
   sendSub (name, subId, params) {

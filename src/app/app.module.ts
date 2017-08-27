@@ -3,8 +3,6 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { CarsComponent } from './cars/cars.component';
 import { WebSocketControllerService } from './rethinkdb/web-socket-controller.service';
-import { RethinkdbModule } from './rethinkdb/rethinkdb.module';
-import { Okta } from './okta/okta.service';
 
 @NgModule({
   declarations: [
@@ -12,10 +10,9 @@ import { Okta } from './okta/okta.service';
     CarsComponent
   ],
   imports: [
-    BrowserModule // ,
-    // RethinkdbModule
+    BrowserModule
   ],
-  providers: [WebSocketControllerService, Okta],
+  providers: [WebSocketControllerService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

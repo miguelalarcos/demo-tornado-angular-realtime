@@ -132,19 +132,6 @@ class SDP(tornado.websocket.WebSocketHandler):
         # close all subscriptions
         self.user_id = None
 
-    @method
-    def login(self, token):
-        request = HTTPRequest(url="https://dev-905907.oktapreview.com/oauth2/v1/userinfo",
-                              method="POST",
-                              headers={'Authorization': 'Bearer ' + token},
-                              body='None'
-                              )
-        response = yield AsyncHTTPClient().fetch(request)
-        print(response.code, str(response.body, 'utf-8'))
-        #if response.code != 200
-        data = json.loads(str(response.body, 'utf-8'))
-        return data['email']
-
     @gen.coroutine
     def feed(self, sub_id, query):
         query = query.filter(~r.row.has_fields('deleted'))
@@ -171,10 +158,10 @@ class SDP(tornado.websocket.WebSocketHandler):
         # self.write_message(ejson.dumps(data)) # json dumps with default
 
     def send_result(self, id, result):
-        self.write_message({'msg': 'result', 'id': id, 'result': result})
+        self.send({'msg': 'result', 'id': id, 'result': result})
 
     def send_error(self, id, error):
-        self.write_message({'msg': 'error', 'id': id, 'error': error})
+        self.send({'msg': 'error', 'id': id, 'error': error})
 
     def send_added(self, sub_id, doc):
         self.send({'msg': 'added', 'id': sub_id, 'doc': doc})
@@ -189,17 +176,17 @@ class SDP(tornado.websocket.WebSocketHandler):
         #self.write_message({'msg': 'removed', 'id': sub_id, 'doc_id': doc_id})
 
     def send_ready(self, sub_id):
-        self.write_message({'msg': 'ready', 'id': sub_id})
+        self.send({'msg': 'ready', 'id': sub_id})
 
     def send_nosub(self, sub_id, error):
-        self.write_message({'msg': 'nosub', 'id': sub_id, 'error': error})
+        self.send({'msg': 'nosub', 'id': sub_id, 'error': error})
 
     def send_nomethod(self, method_id, error):
-        self.write_message({'msg': 'nomethod', 'id': method_id, 'error': error})
+        self.send({'msg': 'nomethod', 'id': method_id, 'error': error})
 
-    def send_event(self, msg, data):
-        data.msg = msg
-        self.write_message(data)
+    #def send_event(self, msg, data):
+    #    data.msg = msg
+    #    self.write_message(data)
 
     def on_open(self):
         pass

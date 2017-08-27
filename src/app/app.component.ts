@@ -1,6 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-// import { Okta } from './okta/okta.service';
-// import {ChangeDetectorRef } from '@angular/core';
+import { Component } from '@angular/core';
 import {WebSocketControllerService} from './rethinkdb/web-socket-controller.service';
 
 declare const gapi: any;
@@ -10,15 +8,12 @@ declare const gapi: any;
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit{
+export class AppComponent {
   title = 'app';
   color = 'red';
   user;
-  oktaSignIn;
 
-  constructor (/*private okta: Okta, private ref: ChangeDetectorRef,*/
-               private ws: WebSocketControllerService) {
-    // this.oktaSignIn = okta.getWidget();
+  constructor ( private ws: WebSocketControllerService) {
     gapi.load('auth2', function () {
       gapi.auth2.init();
     });
@@ -36,14 +31,12 @@ export class AppComponent implements OnInit{
   signOut() {
     gapi.auth2.getAuthInstance().disconnect();
     this.ws.rpc('glogout', {}, (ret) => {
-      console.log('--->ret:', ret);
       this.user = null;
     });
   }
 
   login(token) {
     this.ws.rpc('glogin', {token: token}, (ret) => {
-      console.log('--->ret:', ret);
       this.user = ret;
     });
   }
@@ -52,39 +45,4 @@ export class AppComponent implements OnInit{
     this.ws.rpc('create_car', {matricula: matricula, color: color},
       (x) => console.log(x));
   }
-
-  showLogin() {
-    this.oktaSignIn.remove();
-    setTimeout(() => {
-      this.oktaSignIn.renderEl({el: '#okta-login-container'}, (response) => {
-        if (response.status === 'SUCCESS') {
-          this.login(response[1].accessToken);
-        }
-      });
-    }, 0);
-  }
-
-  ngOnInit() {
-    /*
-    this.oktaSignIn.session.get((response) => {
-      if (response.status !== 'INACTIVE') {
-        console.log(response);
-        this.user = response.login;
-        // this.ref.detectChanges();
-      } else {
-        this.showLogin();
-      }
-    });
-    */
-  }
-
-  logout() {
-    this.oktaSignIn.signOut((err) => {
-      console.log('err:', err);
-      this.user = undefined;
-      this.showLogin();
-      // this.ref.detectChanges();
-    });
-  }
-
 }
