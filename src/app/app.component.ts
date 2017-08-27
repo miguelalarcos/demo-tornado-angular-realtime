@@ -19,8 +19,11 @@ export class AppComponent implements OnInit{
     this.oktaSignIn = okta.getWidget();
   }
 
-  login() {
-    this.ws.rpc('login', {user_name: 'miguel'});
+  login(token) {
+    this.ws.rpc('login', {token: token}, (ret) => {
+      console.log('--->ret:', ret)
+      this.user = ret;
+    });
   }
 
   create_car(matricula, color) {
@@ -33,19 +36,17 @@ export class AppComponent implements OnInit{
     setTimeout(() => {
       this.oktaSignIn.renderEl({el: '#okta-login-container'}, (response) => {
         if (response.status === 'SUCCESS') {
-          this.user = 'miguel'; // response.claims.email;
-          this.ref.detectChanges();
+          this.login(response[1].accessToken);
         }
       });
     }, 0);
   }
 
   ngOnInit() {
-    // console.log(this);
-    // this.user = 'miguel.alarcos@gmail.com';
     this.oktaSignIn.session.get((response) => {
       if (response.status !== 'INACTIVE') {
-        this.user = 'miguel'; // response.login;
+        console.log(response);
+        this.user = response.login;
         this.ref.detectChanges();
       } else {
         this.showLogin();
@@ -55,8 +56,8 @@ export class AppComponent implements OnInit{
 
   logout() {
     this.oktaSignIn.signOut((err) => {
-      this.user = undefined;
       console.log('err:', err);
+      this.user = undefined;
       this.showLogin();
       this.ref.detectChanges();
     });

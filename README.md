@@ -117,6 +117,7 @@ Install and run:
 * npm install
 * ng build
 * rethinkdb (http://localhost:8080/ and create table 'cars' in database 'test')
+* pip install -r requirements.txt
 * python main.py
 * open two browser at localhost:8888
 * play with the app and see both browsers updating screen

@@ -65,10 +65,11 @@ def make_app():
         (r'/', MainHandler),
         (r"/ws", App),
         (r'/(.*)', NoCacheStaticFileHandler, {'path': './dist'}),
-    ])
+    ], autoreload=True)
 
 
 if __name__ == "__main__":
+    print('init')
     app = make_app()
-    app.listen(8888)
+    app.listen(4200)
     tornado.ioloop.IOLoop.current().start()

@@ -12,7 +12,7 @@ class WS {
 
   constructor() {
     this.ready = false;
-    this.ws = new WebSocket('ws://localhost:8888/ws');
+    this.ws = new WebSocket('ws://localhost:4200/ws');
     this.ws.onopen = (evt) => {
       this.ready = true;
       for (const s of subs) {
@@ -34,7 +34,8 @@ class WS {
       console.log(data);
       const callback = callbacks[data.id];
       if (callback) {
-        if (data.msg === 'method') {
+        // check if error /////////////////////////////////// <=================
+        if (data.msg === 'result') {
           callback(data.result);
         } else {
           callback(data);

@@ -11,7 +11,7 @@ from tornado import gen
 import json
 from datetime import datetime
 import pytz
-import sigin
+from tornado.httpclient import HTTPRequest, AsyncHTTPClient
 
 r.set_loop_type("tornado")
 #https://www.rethinkdb.com/docs/async-connections/
@@ -114,12 +114,15 @@ class SDP(tornado.websocket.WebSocketHandler):
 
     @method
     def login(self, token):
-        email = sigin.sigin(token)
-        if email:
-          self.user_id = email
-          return True
-        else:
-          return False
+        request = HTTPRequest(url="https://dev-905907.oktapreview.com/oauth2/v1/userinfo",
+                              method="POST",
+                              headers={'Authorization': 'Bearer ' + token},
+                              body='None'
+                              )
+        response = yield AsyncHTTPClient().fetch(request)
+        print(response.code, response.body)
+        data = json.loads(str(response.body, 'utf-8'))
+        return data['email']
 
     @gen.coroutine
     def feed(self, sub_id, query):
