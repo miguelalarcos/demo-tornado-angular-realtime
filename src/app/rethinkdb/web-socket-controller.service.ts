@@ -37,8 +37,10 @@ class WS {
         // check if error /////////////////////////////////// <=================
         if (data.msg === 'result') {
           callback(data.result);
-        } else {
+        } else if (_.includes(['added', 'changed', 'removed'], data.msg)) {
           callback(data);
+        } else {
+
         }
       }
     };

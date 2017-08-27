@@ -35,6 +35,10 @@ export class AppComponent implements OnInit{
 
   signOut() {
     gapi.auth2.getAuthInstance().disconnect();
+    this.ws.rpc('glogout', {}, (ret) => {
+      console.log('--->ret:', ret);
+      this.user = null;
+    });
   }
 
   login(token) {

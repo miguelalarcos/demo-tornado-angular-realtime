@@ -31,7 +31,7 @@ class App(SDP):
         yield self.update('cars', id, {'color': color})
 
     @method
-    def create_car(self, id, **car):
+    def create_car(self, **car):
         car_validator.validate(car)
         yield self.insert('cars', car)
 
@@ -65,7 +65,7 @@ def make_app():
         (r'/', MainHandler),
         (r"/ws", App),
         (r'/(.*)', NoCacheStaticFileHandler, {'path': './dist'}),
-    ], autoreload=True)
+    ], debug=True)
 
 
 if __name__ == "__main__":

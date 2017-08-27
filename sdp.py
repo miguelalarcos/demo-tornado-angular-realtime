@@ -121,9 +121,16 @@ class SDP(tornado.websocket.WebSocketHandler):
 
         if response.code == 200:
             data = json.loads(str(response.body, 'utf-8'))
+            self.user_id = data['email']
             return data['email']
         else:
+            self.user_id = None
             return None
+
+    @method
+    def glogout(self):
+        # close all subscriptions
+        self.user_id = None
 
     @method
     def login(self, token):
