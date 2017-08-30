@@ -16,6 +16,12 @@ car_schema = {
                 'color': {
                     'type': 'string'
                 },
+                'power': {
+                    'type': 'number'
+                },
+                'date': {
+                    'type': 'datetime'
+                }
             }
         }
 

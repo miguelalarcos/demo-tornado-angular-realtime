@@ -22,7 +22,6 @@
         "styles.css"
       ],
       "scripts": [
-        "../node_modules/@okta/okta-signin-widget/dist/js/okta-sign-in.min.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {
