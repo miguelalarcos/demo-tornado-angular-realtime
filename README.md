@@ -190,3 +190,14 @@ app.component.html
   </form>
 </div>
 ```
+
+Install and run:		
+  		  
+* install rethinkdb
+* npm install		 
+* ng serve		 
+* rethinkdb (go to http://localhost:8080/ and create table 'cars' in database 'test')
+* pip install -r requirements.txt		
+* python main.py		 (tested with Python3.5.3)
+* open two browsers at localhost:8888		 
+* play with the app and see both browsers updating screen
