@@ -84,8 +84,8 @@ export class AppComponent {
       console.log('not valid:');
     } else {
       console.log('valid!!!')
-      // this.ws.rpc('create_car', doc, // {matricula: matricula, color: color},
-      //  (x) => console.log(x));
+      this.ws.rpc('create_car', doc, // {matricula: matricula, color: color},
+        (x) => console.log(x));
     }
   }
 }
