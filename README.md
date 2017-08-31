@@ -1,55 +1,79 @@
-This demo tries to demonstrate how to use Angular 2 client side and Python (Tornado) with Rethinkdb server side.
+Do you know about [Meteor](www.meteor.com)? You should! Meteor is one of the most awesome things about web apps.
 
-These are the relevant parts:
+This demo aims to follow Meteor but with differents elements. I use Python server side (plus Rethinkdb) and Angular client side. Let's see the differences:
 
-Server side:
-
-```python
-class App(SDP):
-
-    @method
-    def add(self, a, b):
-        return a + b
-
-    @can_insert('cars')
-    def is_logged(self, doc):
-        return self.user_id is not None
-
-    @can_update('cars')
-    def is_owner(self, doc, old_doc):
-        return old_doc['owner'] == self.user_id
-
-    @before_insert('cars')
-    def created_at(self, doc):
-        doc['created_at'] = datetime.now(timezone.utc)
-        doc['owner'] = self.user_id
-
-    @method
-    def change_color(self, id, color):
-        yield self.update('cars', id, {'color': color})
-
-    @method
-    def create_car(self, **car):
-        car_validator.validate(car)
-        yield self.insert('cars', car)
-
-    @method
-    def create_car_of_color(self, color, matricula):
-        self.check(color, str)
-        self.check(matricula, str)
-        yield self.insert('cars', {'matricula': matricula, 'color': color})
-
-    @method
-    def delete_car(self, id):
-        yield self.soft_delete('cars', id)
-
-    @sub
-    def cars_of_color(self, color):
-        return r.table('cars').filter({'color': color})
+Meteor subscriptions:
+```javascript
+Meteor.publish('posts', function() {
+  return Posts.find({
+    owner: this.userId
+  });
+});
 ```
 
-Client side:
+And we have:
+```python
+@sub
+def posts(self):
+  return r.table('Posts').filter({'owner': self.user_id})
+```
 
+Meteor methods:
+```javascript
+Meteor.methods({
+  foo(arg1, arg2) {
+    check(arg1, String);
+    check(arg2, Number);
+    // Do stuff...
+    return 'some return value';
+  }
+});
+```
+
+And we have in this demo:
+```python
+@method
+def foo(self, arg1, arg2):
+    self.check(arg1, str)
+    self.check(arg2, int)    
+    # Do stuff...        
+    return 'some return value';
+```
+
+Permission, validation and hooks out of the box:
+```python
+@can_insert('cars')
+def is_logged(self, doc):
+    return self.user_id is not None
+
+@can_update('cars')
+def is_owner(self, doc, old_doc):
+    return old_doc['owner'] == self.user_id
+
+@can_delete('cars')
+def is_owner(self, old_doc):
+    return old_doc['owner'] == self.user_id
+
+@before_insert('cars')
+def created_at(self, doc):
+    doc['created_at'] = datetime.now(timezone.utc)
+    doc['owner'] = self.user_id
+
+@method
+def change_color(self, id, color):
+    yield self.update('cars', id, {'color': color})
+
+@method
+def create_car(self, **car):
+    car_validator.validate(car)
+    yield self.insert('cars', car)
+```
+
+[TODO: Meteor client side]
+
+Let's see client side in my demo:
+
+cars.component.ts
 ```typescript
 @Component({
   selector: 'app-cars',
@@ -60,12 +84,12 @@ export class CarsComponent extends SubscriptionComponent {
 
   @Input()
   public set color(val: string){
-    this.sub('cars_of_color', {color: val});
+    this.sub('cars_of_color', {color: val}); // every time color changes, we unsub previous sub and do a new one
   }
 
-  sort_keys = [['matricula', 'asc']];
+  sort_keys = [['matricula', 'asc']]; // the component has a store where incoming data is saved. sort_keys is useful to sort store when displaying
 
-  constructor(protected ws: WebSocketControllerService) {
+  constructor(protected ws: WebSocketControllerService) { // ws has rpc method
     super(ws);
   }
 
@@ -88,36 +112,19 @@ cars.component.html
 </ul>
 ```
 
-app.component.html
-```html
-<div>
-  <div>
-    <div class="g-signin2" (click)="googleLogin()" data-theme="dark"></div>
-    <button (click)="signOut()">signout</button>
-  </div>
-
-  <span>showing {{color}}</span>
-  <button (click)="color=color=='blue'?'red':'blue'">blue|red</button>
-  <app-cars [color]="color"></app-cars>
-  <input #matricula type="text">
-  <button (click)="create_car(matricula.value, 'red')">create red car</button>
-  <button (click)="create_car(matricula.value, 'blue')">create blue car</button>
-</div>
-```
-
 app.component.ts
 ```typescript
-declare const gapi: any;
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit{
+export class AppComponent {
   title = 'app';
   color = 'red';
   user;
+  doc = {power: 1, date: '', color: '', matricula: ''};
+  errors = {power: null, date: '', color: '', matricula: ''};
 
   constructor ( private ws: WebSocketControllerService) {
     gapi.load('auth2', function () {
@@ -147,37 +154,39 @@ export class AppComponent implements OnInit{
     });
   }
 
-  create_car(matricula, color) {
-    this.ws.rpc('create_car', {matricula: matricula, color: color},
-      (x) => console.log(x));
+  create_car() {
+    const doc = clone(this.doc, false);
+    doc.color = this.color;
+    const valid = validateCar(doc);
+    if (!valid) {
+      console.log('not valid:');
+    } else {
+      this.ws.rpc('create_car', doc, (x) => console.log(x));
+    }
   }
 }
 ```
 
-app.module.ts
-```typescript
-@NgModule({
-  declarations: [
-    AppComponent,
-    CarsComponent
-  ],
-  imports: [
-    BrowserModule
-  ],
-  providers: [WebSocketControllerService],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
+app.component.html
+```html
+<div>
+  <div>
+    <div *ngIf="!user" class="g-signin2" (click)="googleLogin()" data-theme="dark"></div>
+    <button *ngIf="user" (click)="signOut()">signout</button>
+  </div>
+
+  <span>showing {{color}}</span>
+  <button (click)="color=color=='blue'?'red':'blue'">blue|red</button>
+  <app-cars [color]="color"></app-cars>
+  <form>
+    <span>Matricula:</span>
+    <input type="text" [(ngModel)]="doc.matricula" type="text" name="matricula" >
+    <span>Power:</span>
+    <input type="text" class="form-control" [(ngModel)]="doc.power" #name="ngModel" number name="power">
+    <span class="error">{{errors.power}}</span>
+    <span>Date:</span>
+    <input [(ngModel)]="doc.date" ngui-datetime-picker date-only="true" name="date" /> <!--date-format="DD-MM-YYYY HH:mm" />-->
+    <button (click)="create_car()">create car</button>
+  </form>
+</div>
 ```
-
-
-Install and run:
-
-* install rethinkdb
-* npm install
-* ng build
-* rethinkdb (http://localhost:8080/ and create table 'cars' in database 'test')
-* pip install -r requirements.txt
-* python main.py
-* open two browser at localhost:8888
-* play with the app and see both browsers updating screen
