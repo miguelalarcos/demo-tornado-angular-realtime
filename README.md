@@ -1,4 +1,4 @@
-Do you know about [Meteor](www.meteor.com)? You should! Meteor is one of the most awesome things about web apps.
+Do you know about [Meteor](http://www.meteor.com)? You should! Meteor is one of the most awesome things about web apps.
 
 This demo aims to follow Meteor but with differents elements. I use Python server side (plus Rethinkdb) and Angular client side. Let's see the differences:
 
