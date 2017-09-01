@@ -42,31 +42,37 @@ def foo(self, arg1, arg2):
 
 Permission, validation and hooks out of the box:
 ```python
-@can_insert('cars')
-def is_logged(self, doc):
-    return self.user_id is not None
+class App(SDP):
 
-@can_update('cars')
-def is_owner(self, doc, old_doc):
-    return old_doc['owner'] == self.user_id
+    @method
+    def add(self, a, b):
+        return a + b
 
-@can_delete('cars')
-def is_owner(self, old_doc):
-    return old_doc['owner'] == self.user_id
+    @can_insert('cars')
+    def is_logged(self, doc):
+        return self.user_id is not None
 
-@before_insert('cars')
-def created_at(self, doc):
-    doc['created_at'] = datetime.now(timezone.utc)
-    doc['owner'] = self.user_id
+    @can_update('cars')
+    def is_owner(self, doc, old_doc):
+        return old_doc['owner'] == self.user_id
 
-@method
-def change_color(self, id, color):
-    yield self.update('cars', id, {'color': color})
+    @can_delete('cars')
+    def is_owner(self, old_doc):
+        return old_doc['owner'] == self.user_id
 
-@method
-def create_car(self, **car):
-    car_validator.validate(car)
-    yield self.insert('cars', car)
+    @before_insert('cars')
+    def created_at(self, doc):
+        doc['created_at'] = datetime.now(timezone.utc)
+        doc['owner'] = self.user_id
+
+    @method
+    def change_color(self, id, color):
+        yield self.update('cars', id, {'color': color})
+
+    @method
+    def create_car(self, **car):
+        car_validator.validate(car)
+        yield self.insert('cars', car)
 ```
 
 Client side,
