@@ -69,8 +69,9 @@ def create_car(self, **car):
     yield self.insert('cars', car)
 ```
 
-Client side, Meteor (not tested, made by memory):
+Client side,
 
+Meteor
 ```html
 <template name="cars">
   <ul>
@@ -83,6 +84,16 @@ Client side, Meteor (not tested, made by memory):
 </template>
 ```
 
+my demo
+```html
+<ul>
+  <li *ngFor="let car of store">
+    {{car.matricula}}, {{format_date(car.created_at)}}, <button (click)="delete_car(car.id)">delete car</button>
+  </li>
+</ul>
+```
+
+Meteor
 ```javascript
 Template.cars.onCreated(function () { 
   var self = this;
@@ -107,56 +118,7 @@ Template.cars.helpers({
 });
 ```
 
-```html
-<div>
-  {{>loginButtons}}
-
-  <span>showing {{color}}</span>
-  <button class="toggle-color">blue|red</button>
-  {{> cars color=color}}
-  <form>
-    <span>Matricula:</span>
-    <input type="text" value={{doc.matricula}} name="matricula" >
-    <span>Power:</span>
-    <input type="text" value={{doc.power}} name="power">
-    <span class="error">{{errors.power}}</span>
-    <span>Date:</span>
-    <datetimepicker value={{doc.date}} name="date" />
-    <button class='create-car'>create car</button>
-  </form>
-</div>
-```
-
-```javascript
-Template.main.onCreated(function () {
-  this.color = new ReactiveVar('red');
-  this.doc = new ReactiveDict();
-}); 
-
-Template.main.helpers({
-  color(){
-    return Template.instance().data.color;
-  }
-});
-
-Template.main.events({
-  'change input'(evt, tmpl){
-    val = evt.taget.value;
-    tmpl.data.doc.set($(evt.target).attr("name"), val):
-  },
-  'click .toggle-color'(evt, tmpl){
-    color = tmpl.data.color.get() === 'red'? 'blue': 'red';
-    tmpl.data.color.set(color);
-  },
-  'click .create-car'(evt, tmpl){
-    Meteor.call('createCar', tmpl.data.doc);
-  }
-});
-```
-
-Let's see client side in my demo:
-
-cars.component.ts
+my demo
 ```typescript
 @Component({
   selector: 'app-cars',
@@ -186,16 +148,80 @@ export class CarsComponent extends SubscriptionComponent {
 }
 ```
 
-cars.component.html
+Meteor
 ```html
-<ul>
-  <li *ngFor="let car of store">
-    {{car.matricula}}, {{format_date(car.created_at)}}, <button (click)="delete_car(car.id)">delete car</button>
-  </li>
-</ul>
+<div>
+  {{>loginButtons}}
+
+  <span>showing {{color}}</span>
+  <button class="toggle-color">blue|red</button>
+  {{> cars color=color}}
+  <form>
+    <span>Matricula:</span>
+    <input type="text" value={{doc.matricula}} name="matricula" >
+    <span>Power:</span>
+    <input type="text" value={{doc.power}} name="power">
+    <span class="error">{{errors.power}}</span>
+    <span>Date:</span>
+    <datetimepicker value={{doc.date}} name="date" />
+    <button class='create-car'>create car</button>
+  </form>
+</div>
 ```
 
-app.component.ts
+my demo
+```html
+<div>
+  <div>
+    <div *ngIf="!user" class="g-signin2" (click)="googleLogin()" data-theme="dark"></div>
+    <button *ngIf="user" (click)="signOut()">signout</button>
+  </div>
+
+  <span>showing {{color}}</span>
+  <button (click)="color=color=='blue'?'red':'blue'">blue|red</button>
+  <app-cars [color]="color"></app-cars>
+  <form>
+    <span>Matricula:</span>
+    <input type="text" [(ngModel)]="doc.matricula" type="text" name="matricula" >
+    <span>Power:</span>
+    <input type="text" class="form-control" [(ngModel)]="doc.power" #name="ngModel" number name="power">
+    <span class="error">{{errors.power}}</span>
+    <span>Date:</span>
+    <input [(ngModel)]="doc.date" ngui-datetime-picker date-only="true" name="date" /> <!--date-format="DD-MM-YYYY HH:mm" />-->
+    <button (click)="create_car()">create car</button>
+  </form>
+</div>
+```
+
+Meteor
+```javascript
+Template.main.onCreated(function () {
+  this.color = new ReactiveVar('red');
+  this.doc = new ReactiveDict();
+}); 
+
+Template.main.helpers({
+  color(){
+    return Template.instance().data.color;
+  }
+});
+
+Template.main.events({
+  'change input'(evt, tmpl){
+    val = evt.taget.value;
+    tmpl.data.doc.set($(evt.target).attr("name"), val):
+  },
+  'click .toggle-color'(evt, tmpl){
+    color = tmpl.data.color.get() === 'red'? 'blue': 'red';
+    tmpl.data.color.set(color);
+  },
+  'click .create-car'(evt, tmpl){
+    Meteor.call('createCar', tmpl.data.doc);
+  }
+});
+```
+
+my demo
 ```typescript
 @Component({
   selector: 'app-root',
@@ -250,34 +276,10 @@ export class AppComponent {
 }
 ```
 
-app.component.html
-```html
-<div>
-  <div>
-    <div *ngIf="!user" class="g-signin2" (click)="googleLogin()" data-theme="dark"></div>
-    <button *ngIf="user" (click)="signOut()">signout</button>
-  </div>
-
-  <span>showing {{color}}</span>
-  <button (click)="color=color=='blue'?'red':'blue'">blue|red</button>
-  <app-cars [color]="color"></app-cars>
-  <form>
-    <span>Matricula:</span>
-    <input type="text" [(ngModel)]="doc.matricula" type="text" name="matricula" >
-    <span>Power:</span>
-    <input type="text" class="form-control" [(ngModel)]="doc.power" #name="ngModel" number name="power">
-    <span class="error">{{errors.power}}</span>
-    <span>Date:</span>
-    <input [(ngModel)]="doc.date" ngui-datetime-picker date-only="true" name="date" /> <!--date-format="DD-MM-YYYY HH:mm" />-->
-    <button (click)="create_car()">create car</button>
-  </form>
-</div>
-```
-
 Install and run:		
   		  
 * install rethinkdb
-* npm install		 
+* npm install		 (tested using node v8.3.0 (npm v5.3.0))
 * ng serve		 
 * rethinkdb (go to http://localhost:8080/ and create table 'cars' in database 'test')
 * pip install -r requirements.txt		
