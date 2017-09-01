@@ -9,7 +9,7 @@
   <app-cars [color]="color"></app-cars>
   <form>
     <span>Matricula:</span>
-    <input type="text" [(ngModel)]="doc.matricula" type="text" name="matricula" >
+    <input type="text" [(ngModel)]="doc.matricula" name="matricula" >
     <span>Power:</span>
     <input type="text" class="form-control" [(ngModel)]="doc.power" #name="ngModel" number name="power">
     <span class="error">{{errors.power}}</span>

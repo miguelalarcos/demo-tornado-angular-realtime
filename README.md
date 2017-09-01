@@ -69,7 +69,90 @@ def create_car(self, **car):
     yield self.insert('cars', car)
 ```
 
-[TODO: Meteor client side]
+Client side, Meteor (not tested, made by memory):
+
+```html
+<template name="cars">
+  <ul>
+    {{#each cars}}
+    <li>
+      {{matricula}}, {{format_date date}}, <button class="delete">delete car</button>
+    </li>
+    {{/each}}
+  </ul>
+</template>
+```
+
+```javascript
+Template.cars.onCreated(function () { 
+  var self = this;
+  self.autorun(function () {
+    self.subscribe('cars', this.color);
+  });
+});
+
+Template.cars.events({
+  'click .delete'(evt, tmpl){
+    Meteor.call('delete_car', this.id);
+  }
+})
+
+Template.cars.helpers({
+  cars(){
+    return Cars.find({color: this.color});
+  },
+  format_date(date){
+    return moment(date).format();
+  }
+});
+```
+
+```html
+<div>
+  {{>loginButtons}}
+
+  <span>showing {{color}}</span>
+  <button class="toggle-color">blue|red</button>
+  {{> cars color=color}}
+  <form>
+    <span>Matricula:</span>
+    <input type="text" value={{doc.matricula}} name="matricula" >
+    <span>Power:</span>
+    <input type="text" value={{doc.power}} name="power">
+    <span class="error">{{errors.power}}</span>
+    <span>Date:</span>
+    <datetimepicker value={{doc.date}} name="date" />
+    <button class='create-car'>create car</button>
+  </form>
+</div>
+```
+
+```javascript
+Template.main.onCreated(function () {
+  this.color = new ReactiveVar('red');
+  this.doc = new ReactiveDict();
+}); 
+
+Template.main.helpers({
+  color(){
+    return Template.instance().data.color;
+  }
+});
+
+Template.main.events({
+  'change input'(evt, tmpl){
+    val = evt.taget.value;
+    tmpl.data.doc.set($(evt.target).attr("name"), val):
+  },
+  'click .toggle-color'(evt, tmpl){
+    color = tmpl.data.color.get() === 'red'? 'blue': 'red';
+    tmpl.data.color.set(color);
+  },
+  'click .create-car'(evt, tmpl){
+    Meteor.call('createCar', tmpl.data.doc);
+  }
+});
+```
 
 Let's see client side in my demo:
 
