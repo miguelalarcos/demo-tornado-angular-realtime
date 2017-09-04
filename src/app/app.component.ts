@@ -81,7 +81,7 @@ export class AppComponent {
     doc.color = this.color;
     const valid = validateCar(doc);
     if (!valid) {
-      console.log('not valid:');
+      console.log('not valid:', validateCar);
     } else {
       console.log('valid!!!')
       this.ws.rpc('create_car', doc, // {matricula: matricula, color: color},

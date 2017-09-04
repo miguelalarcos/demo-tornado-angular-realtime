@@ -22,16 +22,15 @@ class WS {
     this.ws.onmessage = (evt) => {
       console.log('raw->', evt.data);
       const data = EJSON.parse(evt.data);
-      console.log(data);
+      //console.log(data);
       const callback = callbacks[data.id];
       if (callback) {
-        // check if error /////////////////////////////////// <=================
         if (data.msg === 'result') {
           callback(data.result);
         } else if (_.includes(['added', 'changed', 'removed'], data.msg)) {
           callback(data);
-        } else {
-
+        } else if (data.msg === 'error') { 
+          console.log('error', data.error);
         }
       }
     };
@@ -47,16 +46,17 @@ class WS {
 
   sendSub (name, subId, params) {
     const data = {msg: 'sub', name: name, id: subId, params: params};
-    this.ws.send(JSON.stringify(data));
+    //this.ws.send(JSON.stringify(data));
+    this.send(data);
   }
 
   sendUnSub (subId) {
     const data = {msg: 'unsub', id: subId};
-    this.ws.send(JSON.stringify(data));
+    //this.ws.send(JSON.stringify(data));
+    this.send(data);
   }
 
   sendRPC (name, RPCId, params) {
-    console.log('sendRPC', name, params);
     const data = {msg: 'method', method: name, id: RPCId, params: params};
     // this.ws.send(JSON.stringify(data));
     this.send(data);
@@ -73,9 +73,9 @@ export class WebSocketControllerService {
   }
 
   sub(name, filter, callback) {
-      id += 1;
-      callbacks[id] = callback;
-      subs.push([name, id, filter]);
+    id += 1;
+    callbacks[id] = callback;
+    subs.push([name, id, filter]);
     if (this.ws.ready) {
       this.ws.sendSub(name, id, filter);
     }
