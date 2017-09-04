@@ -286,7 +286,7 @@ Install and run:
   		  
 * install rethinkdb
 * npm install		 (tested using node v8.3.0 (npm v5.3.0))
-* ng serve		 
+* ng build -w		 
 * rethinkdb (go to http://localhost:8080/ and create table 'cars' in database 'test')
 * pip install -r requirements.txt		
 * python main.py		 (tested with Python3.5.3)
